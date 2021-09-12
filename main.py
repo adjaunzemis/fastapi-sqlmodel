@@ -3,22 +3,19 @@ from typing import List, Optional
 from fastapi import FastAPI
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
-class Hero(SQLModel, table=True):
+class HeroBase(SQLModel):
+    name: str
+    secret_name: str
+    age: Optional[int] = None
+
+class Hero(HeroBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    secret_name: str
-    age: Optional[int] = None
 
-class HeroCreate(SQLModel):
-    name: str
-    secret_name: str
-    age: Optional[int] = None
+class HeroCreate(HeroBase):
+    pass
 
-class HeroRead(SQLModel):
+class HeroRead(HeroBase):
     id: int
-    name: str
-    secret_name: str
-    age: Optional[int] = None
 
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
