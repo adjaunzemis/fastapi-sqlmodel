@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import FastAPI
 from sqlmodel import Field, Session, SQLModel, create_engine, select
@@ -24,7 +24,7 @@ app = FastAPI()
 def on_startup():
     create_db_and_tables()
 
-@app.post("/heroes/")
+@app.post("/heroes/", response_model=Hero)
 def create_hero(hero: Hero):
     with Session(engine) as session:
         session.add(hero)
@@ -32,7 +32,7 @@ def create_hero(hero: Hero):
         session.refresh(hero)
         return hero
 
-@app.get("/heroes/")
+@app.get("/heroes/", response_model=List[Hero])
 def read_heroes():
     with Session(engine) as session:
         heroes = session.exec(select(Hero)).all()
