@@ -1,3 +1,4 @@
+from os import stat
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
@@ -16,6 +17,11 @@ class HeroCreate(HeroBase):
 
 class HeroRead(HeroBase):
     id: int
+    
+class HeroUpdate(SQLModel):
+    name: Optional[str] = None
+    secret_name: Optional[str] = None
+    age: Optional[int] = None
 
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -54,3 +60,27 @@ def read_hero(hero_id: int):
         if not hero:
             raise HTTPException(status_code=404, detail="Hero not found")
         return hero
+
+@app.patch("/heroes/{hero_id}", response_model=HeroRead)
+def update_hero(hero_id: int, hero: HeroUpdate):
+    with Session(engine) as session:
+        db_hero = session.get(Hero, hero_id)
+        if not db_hero:
+            raise HTTPException(status_code=404, detail="Hero not found")
+        hero_data = hero.dict(exclude_unset=True)
+        for key, value in hero_data.items():
+            setattr(db_hero, key, value)
+        session.add(db_hero)
+        session.commit()
+        session.refresh(db_hero)
+        return db_hero
+
+@app.delete("/heroes/{hero_id}")
+def delete_hero(hero_id: int):
+    with Session(engine) as session:
+        hero = session.get(Hero, hero_id)
+        if not hero:
+            raise HTTPException(status_code=404, detail="Hero not found")
+        session.delete(hero)
+        session.commit()
+        return {"ok": True}
