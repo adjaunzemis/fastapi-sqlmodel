@@ -9,6 +9,17 @@ class Hero(SQLModel, table=True):
     secret_name: str
     age: Optional[int] = None
 
+class HeroCreate(SQLModel):
+    name: str
+    secret_name: str
+    age: Optional[int] = None
+
+class HeroRead(SQLModel):
+    id: int
+    name: str
+    secret_name: str
+    age: Optional[int] = None
+
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
@@ -24,15 +35,16 @@ app = FastAPI()
 def on_startup():
     create_db_and_tables()
 
-@app.post("/heroes/", response_model=Hero)
-def create_hero(hero: Hero):
+@app.post("/heroes/", response_model=HeroRead)
+def create_hero(hero: HeroCreate):
     with Session(engine) as session:
-        session.add(hero)
+        db_hero = Hero.from_orm(hero)
+        session.add(db_hero)
         session.commit()
-        session.refresh(hero)
-        return hero
+        session.refresh(db_hero)
+        return db_hero
 
-@app.get("/heroes/", response_model=List[Hero])
+@app.get("/heroes/", response_model=List[HeroRead])
 def read_heroes():
     with Session(engine) as session:
         heroes = session.exec(select(Hero)).all()
